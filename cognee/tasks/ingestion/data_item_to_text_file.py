@@ -1,27 +1,18 @@
 import os
 from urllib.parse import urlparse
-from typing import Any, List, Tuple
+from typing import Any, Tuple
 from pathlib import Path
 import tempfile
 
+from cognee.infrastructure.files.utils.local_file_path_validation import validate_local_file_path
 from cognee.infrastructure.loaders.LoaderInterface import LoaderInterface
 from cognee.modules.ingestion.exceptions import IngestionError
 from cognee.infrastructure.loaders import get_loader_engine
 from cognee.shared.logging_utils import get_logger
 from cognee.infrastructure.files.utils.open_data_file import open_data_file
-
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from cognee.tasks.ingestion.ingestion_settings import settings
 
 logger = get_logger(__name__)
-
-
-class SaveDataSettings(BaseSettings):
-    accept_local_file_path: bool = True
-
-    model_config = SettingsConfigDict(env_file=".env", extra="allow")
-
-
-settings = SaveDataSettings()
 
 
 async def pull_from_s3(file_path, destination_file) -> None:
@@ -56,24 +47,24 @@ async def data_item_to_text_file(
         # data is local file path
         elif parsed_url.scheme == "file":
             if settings.accept_local_file_path:
+                validated = validate_local_file_path(Path(parsed_url.path))
                 loader = get_loader_engine()
-                return await loader.load_file(data_item_path, preferred_loaders), loader.get_loader(
-                    data_item_path, preferred_loaders
+                validated_uri = validated.as_uri()
+                return await loader.load_file(validated_uri, preferred_loaders), loader.get_loader(
+                    validated_uri, preferred_loaders
                 )
-            else:
-                raise IngestionError(message="Local files are not accepted.")
+            raise IngestionError(message="Local files are not accepted.")
 
         # data is an absolute file path
         elif data_item_path.startswith("/") or (
             os.name == "nt" and len(data_item_path) > 1 and data_item_path[1] == ":"
         ):
-            # Handle both Unix absolute paths (/path) and Windows absolute paths (C:\path)
             if settings.accept_local_file_path:
+                validated = validate_local_file_path(Path(os.path.normpath(data_item_path)))
                 loader = get_loader_engine()
-                return await loader.load_file(data_item_path, preferred_loaders), loader.get_loader(
-                    data_item_path, preferred_loaders
+                return await loader.load_file(str(validated), preferred_loaders), loader.get_loader(
+                    str(validated), preferred_loaders
                 )
-            else:
-                raise IngestionError(message="Local files are not accepted.")
+            raise IngestionError(message="Local files are not accepted.")
     # data is not a supported type
     raise IngestionError(message=f"Data type not supported: {type(data_item_path)}")

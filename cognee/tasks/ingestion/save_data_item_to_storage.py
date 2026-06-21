@@ -3,25 +3,16 @@ from pathlib import Path
 from urllib.parse import urlparse
 from typing import Union, BinaryIO, Any
 
+from cognee.infrastructure.files.utils.local_file_path_validation import local_path_to_file_uri
 from cognee.modules.ingestion.exceptions import IngestionError
 from cognee.modules.ingestion import save_data_to_file
 from cognee.shared.logging_utils import get_logger
-from pydantic_settings import BaseSettings, SettingsConfigDict
-
+from cognee.tasks.ingestion.ingestion_settings import settings
 from cognee.tasks.web_scraper.utils import fetch_page_content
 from cognee.tasks.ingestion.data_item import DataItem
 
 
 logger = get_logger()
-
-
-class SaveDataSettings(BaseSettings):
-    accept_local_file_path: bool = True
-
-    model_config = SettingsConfigDict(env_file=".env", extra="allow")
-
-
-settings = SaveDataSettings()
 
 
 async def save_data_item_to_storage(data_item: Union[BinaryIO, str, Any]) -> str:
@@ -59,14 +50,15 @@ async def save_data_item_to_storage(data_item: Union[BinaryIO, str, Any]) -> str
         if parsed_url.scheme == "s3":
             return data_item
         elif parsed_url.scheme == "http" or parsed_url.scheme == "https":
+            if not settings.allow_http_requests:
+                raise IngestionError(message="HTTP requests are not accepted.")
             urls_to_page_contents = await fetch_page_content(data_item)
             return await save_data_to_file(urls_to_page_contents[data_item], file_extension="html")
         # data is local file path
         elif parsed_url.scheme == "file":
             if settings.accept_local_file_path:
-                return data_item
-            else:
-                raise IngestionError(message="Local files are not accepted.")
+                return local_path_to_file_uri(Path(parsed_url.path))
+            raise IngestionError(message="Local files are not accepted.")
 
         # data is an absolute file path
         elif data_item.startswith("/") or (
@@ -74,17 +66,13 @@ async def save_data_item_to_storage(data_item: Union[BinaryIO, str, Any]) -> str
         ):
             # Handle both Unix absolute paths (/path) and Windows absolute paths (C:\path)
             if settings.accept_local_file_path:
-                # Normalize path separators before creating file URL
-                normalized_path = os.path.normpath(data_item)
-                return Path(normalized_path).as_uri()
-            else:
-                raise IngestionError(message="Local files are not accepted.")
+                return local_path_to_file_uri(Path(os.path.normpath(data_item)))
+            raise IngestionError(message="Local files are not accepted.")
         # Data is a relative file path
         elif abs_path.is_file():
             if settings.accept_local_file_path:
-                # Normalize path separators before creating file URL
-                normalized_path = os.path.normpath(abs_path)
-                return Path(normalized_path).as_uri()
+                return local_path_to_file_uri(Path(os.path.normpath(abs_path)))
+            raise IngestionError(message="Local files are not accepted.")
 
         # data is text, save it to data storage and return the file path
         return await save_data_to_file(data_item)
