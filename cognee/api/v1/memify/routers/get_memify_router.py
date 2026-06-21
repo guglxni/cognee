@@ -11,6 +11,7 @@ from cognee.modules.users.models import User
 from cognee.modules.users.methods import get_authenticated_user
 from cognee.shared.utils import send_telemetry
 from cognee.modules.pipelines.models import PipelineRunErrored
+from cognee.api.error_handling import get_api_error_detail
 from cognee.shared.logging_utils import get_logger
 from cognee.shared.usage_logger import log_usage
 from cognee import __version__ as cognee_version
@@ -127,7 +128,7 @@ def get_memify_router() -> APIRouter:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 content=ErrorResponse(
                     error="Internal server error",
-                    detail=str(error),
+                    detail=get_api_error_detail(error),
                 ).model_dump(),
             )
 

@@ -6,6 +6,7 @@ from fastapi.encoders import jsonable_encoder
 from typing import List
 from uuid import UUID
 from pydantic import WithJsonSchema
+from cognee.api.error_handling import get_api_error_detail
 from cognee.shared.logging_utils import get_logger
 from cognee.modules.users.models import User
 from cognee.modules.users.methods import get_authenticated_user
@@ -136,7 +137,7 @@ def get_update_router() -> APIRouter:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 content=ErrorResponse(
                     error="Internal server error",
-                    detail=str(error),
+                    detail=get_api_error_detail(error),
                 ).model_dump(),
             )
 

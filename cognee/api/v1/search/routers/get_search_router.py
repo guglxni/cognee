@@ -17,6 +17,7 @@ from cognee.modules.users.exceptions.exceptions import PermissionDeniedError, Us
 from cognee.modules.users.methods import get_authenticated_user
 from cognee.modules.users.models import User
 from cognee.shared.usage_logger import log_usage
+from cognee.api.error_handling import get_api_error_detail
 from cognee.shared.utils import send_telemetry
 
 
@@ -147,7 +148,7 @@ def get_search_router() -> APIRouter:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 content=ErrorResponse(
                     error="Internal server error",
-                    detail=str(error),
+                    detail=get_api_error_detail(error),
                 ).model_dump(),
             )
 
@@ -266,7 +267,7 @@ def get_search_router() -> APIRouter:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 content=ErrorResponse(
                     error="Internal server error",
-                    detail=str(error),
+                    detail=get_api_error_detail(error),
                 ).model_dump(),
             )
 
