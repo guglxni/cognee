@@ -356,7 +356,7 @@ async def get_search_type_retriever_instance(
 
     if (
         query_type in [SearchType.CYPHER, SearchType.NATURAL_LANGUAGE]
-        and os.getenv("ALLOW_CYPHER_QUERY", "true").lower() == "false"
+        and os.getenv("ALLOW_CYPHER_QUERY", "false").lower() == "false"
     ):
         raise UnsupportedSearchTypeError("Cypher query search types are disabled.")
 
