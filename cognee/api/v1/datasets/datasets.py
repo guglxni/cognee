@@ -165,7 +165,10 @@ class datasets:
         data = dataset_data[0] if len(dataset_data) > 0 else None
 
         if not data:
-            # If data is not found in the system, user is using a custom graph model.
+            # Custom graph model path: data_id may exist only in the graph, not relational DB.
+            if not await has_data_related_nodes(dataset_id, data_id):
+                raise UnauthorizedDataAccessError(f"Data {data_id} not accessible.")
+
             async with set_database_global_context_variables(dataset_id, dataset.owner_id):
                 await delete_data_nodes_and_edges(dataset_id, data_id, user.id)
 
