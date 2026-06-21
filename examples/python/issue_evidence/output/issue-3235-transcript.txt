@@ -1,0 +1,19 @@
+$ sed -n "167,176p" cognee/api/v1/datasets/datasets.py
+        if not data:
+            # If data is not found in the system, user is using a custom graph model.
+            async with set_database_global_context_variables(dataset_id, dataset.owner_id):
+                await delete_data_nodes_and_edges(dataset_id, data_id, user.id)
+
+                dataset_data = await get_dataset_data(dataset.id)
+                if not dataset_data and delete_dataset_if_empty:
+                    await delete_dataset(dataset)
+
+            return {"status": "success"}
+
+$ uv run python examples/python/repro_delete_data_missing_row.py
+dataset_id: b27cdc6e-0608-58f9-9fa9-739b06b26939
+random_data_id: 86d526b6-1951-426a-95bf-079469bc5c7f
+delete_data result: {'status': 'success'}
+Repro confirmed: delete succeeded for unrelated UUID with no Data row.
+
+[exit code: 0]

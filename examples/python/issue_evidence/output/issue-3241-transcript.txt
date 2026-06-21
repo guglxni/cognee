@@ -1,0 +1,18 @@
+$ rg -n "get_authenticated_user|is_superuser|ENABLE_BACKEND_ACCESS_CONTROL" cognee/modules/users/methods/get_authenticated_user.py | head -8
+11:logger = get_logger("get_authenticated_user")
+20:      * ``ENABLE_BACKEND_ACCESS_CONTROL`` is the canonical posture switch
+23:        If unset, it inherits from ``ENABLE_BACKEND_ACCESS_CONTROL`` — turning
+28:        ``ENABLE_BACKEND_ACCESS_CONTROL=true`` is a misconfiguration; we log
+38:    access_value, access_explicit = _read_bool("ENABLE_BACKEND_ACCESS_CONTROL")
+49:                "ENABLE_BACKEND_ACCESS_CONTROL=true: multi-tenant mode requires "
+52:                "ENABLE_BACKEND_ACCESS_CONTROL=false."
+61:            "inherited from ENABLE_BACKEND_ACCESS_CONTROL"
+
+$ ENABLE_BACKEND_ACCESS_CONTROL=false uv run python examples/python/issue_evidence/repro_3241_superuser.py
+REQUIRE_AUTHENTICATION: False
+ENABLE_BACKEND_ACCESS_CONTROL: False
+Unauthenticated caller resolved to email: default_user@example.com
+is_superuser: True
+BUG: no token => default superuser when ENABLE_BACKEND_ACCESS_CONTROL=false
+
+[exit code: 0]

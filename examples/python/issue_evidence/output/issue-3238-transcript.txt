@@ -1,0 +1,13 @@
+$ sed -n "65,67p" cognee/tasks/ingestion/save_data_item_to_storage.py
+        elif parsed_url.scheme == "file":
+            if settings.accept_local_file_path:
+                return data_item
+
+$ uv run python examples/python/issue_evidence/repro_3238_local_file.py
+input path: /var/folders/_v/q7djqj5x3vbb63cmhbngf5tr0000gn/T/tmpww0jn5i9/secret.txt
+stored uri: file:///var/folders/_v/q7djqj5x3vbb63cmhbngf5tr0000gn/T/tmpww0jn5i9/secret.txt
+marker in stored content: True
+accept_local_file_path default: True (no env override)
+BUG: host file read into Cognee storage without allowlist/traversal checks
+
+[exit code: 0]

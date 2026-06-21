@@ -1,0 +1,15 @@
+$ rg -n ALLOW_HTTP_REQUESTS cognee --glob "*.py"
+cognee/api/v1/add/routers/get_add_router.py:70:          - HTTP URLs (if ALLOW_HTTP_REQUESTS is enabled)
+
+$ sed -n "61,63p" cognee/tasks/ingestion/save_data_item_to_storage.py
+        elif parsed_url.scheme == "http" or parsed_url.scheme == "https":
+            urls_to_page_contents = await fetch_page_content(data_item)
+            return await save_data_to_file(urls_to_page_contents[data_item], file_extension="html")
+
+$ ALLOW_HTTP_REQUESTS=false uv run python examples/python/issue_evidence/repro_3237_ssrf.py
+grep ALLOW_HTTP_REQUESTS in *.py => 1 match (add router docstring only, no enforcement)
+ALLOW_HTTP_REQUESTS env set to: false
+fetch_page_content called: True
+BUG: HTTP fetch runs even with ALLOW_HTTP_REQUESTS=false (flag unused in code)
+
+[exit code: 0]

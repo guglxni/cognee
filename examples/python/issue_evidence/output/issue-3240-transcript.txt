@@ -1,0 +1,14 @@
+$ grep -n "detail=str(error)" cognee/api/v1/add/routers/get_add_router.py
+148:                    detail=str(error),
+
+$ uv run python examples/python/issue_evidence/repro_3240_exception_leak.py 2>&1 | tail -8
+│   20 │   original = add_pkg.add                                              │
+│   21 │   add_pkg.add = boom                                                  │
+╰──────────────────────────────────────────────────────────────────────────────╯
+RuntimeError: INTERNAL_DB_HOST=10.0.0.99 connection refused
+
+HTTP status: 500
+Response body: {"error":"Internal server error","detail":"INTERNAL_DB_HOST=10.0.0.99 connection refused"}
+BUG: internal exception string leaked in JSON detail field
+
+[exit code: 0]

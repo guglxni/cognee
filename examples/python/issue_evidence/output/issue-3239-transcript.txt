@@ -1,0 +1,10 @@
+$ rg -n "ALLOW_CYPHER_QUERY" cognee/modules/search/methods/get_search_type_retriever_instance.py
+359:        and os.getenv("ALLOW_CYPHER_QUERY", "true").lower() == "false"
+
+$ uv run python examples/python/issue_evidence/repro_3239_cypher.py
+ALLOW_CYPHER_QUERY unset => effective default: true
+CYPHER retriever class: CypherSearchRetriever
+With ALLOW_CYPHER_QUERY=false: blocked as expected: UnsupportedSearchTypeError
+BUG: Cypher enabled by default; user query_text passed to graph_engine.query()
+
+[exit code: 0]
