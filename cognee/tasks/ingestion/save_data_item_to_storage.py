@@ -6,22 +6,12 @@ from typing import Union, BinaryIO, Any
 from cognee.modules.ingestion.exceptions import IngestionError
 from cognee.modules.ingestion import save_data_to_file
 from cognee.shared.logging_utils import get_logger
-from pydantic_settings import BaseSettings, SettingsConfigDict
-
+from cognee.tasks.ingestion.ingestion_settings import settings
 from cognee.tasks.web_scraper.utils import fetch_page_content
 from cognee.tasks.ingestion.data_item import DataItem
 
 
 logger = get_logger()
-
-
-class SaveDataSettings(BaseSettings):
-    accept_local_file_path: bool = True
-
-    model_config = SettingsConfigDict(env_file=".env", extra="allow")
-
-
-settings = SaveDataSettings()
 
 
 async def save_data_item_to_storage(data_item: Union[BinaryIO, str, Any]) -> str:
@@ -59,6 +49,8 @@ async def save_data_item_to_storage(data_item: Union[BinaryIO, str, Any]) -> str
         if parsed_url.scheme == "s3":
             return data_item
         elif parsed_url.scheme == "http" or parsed_url.scheme == "https":
+            if not settings.allow_http_requests:
+                raise IngestionError(message="HTTP requests are not accepted.")
             urls_to_page_contents = await fetch_page_content(data_item)
             return await save_data_to_file(urls_to_page_contents[data_item], file_extension="html")
         # data is local file path

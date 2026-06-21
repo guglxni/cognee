@@ -10,18 +10,7 @@ from cognee.infrastructure.loaders import get_loader_engine
 from cognee.shared.logging_utils import get_logger
 from cognee.infrastructure.files.utils.open_data_file import open_data_file
 
-from pydantic_settings import BaseSettings, SettingsConfigDict
-
-logger = get_logger(__name__)
-
-
-class SaveDataSettings(BaseSettings):
-    accept_local_file_path: bool = True
-
-    model_config = SettingsConfigDict(env_file=".env", extra="allow")
-
-
-settings = SaveDataSettings()
+from cognee.tasks.ingestion.ingestion_settings import settings
 
 
 async def pull_from_s3(file_path, destination_file) -> None:
